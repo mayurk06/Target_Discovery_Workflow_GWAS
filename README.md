@@ -1,5 +1,5 @@
 # Target_Discovery_Workflow_GWAS
-This repository contains the work from my summer 2022 internship project. It contains a mix of bash and python scripts and some nextflow pipelines. Some workflows have been intergrated into a pipeline, while others need to be run individually.
+This repository contains the work from my summer 2022 internship project. It contains a mix of bash and python scripts and some nextflow pipelines. Due to time constraints, some workflows have been integrated into a pipeline, while others need to be run individually.
 
 # Repo Structure
 This repo contains 2 main folders. 
@@ -11,4 +11,5 @@ Contains the "raw" files used to carry out the exact work of my internship. All 
 Contains the in progress pipeline work for reproducible workflows. 
 
 # TODO
-1. Refactor code to allow for maximum flexibility of inputs/outputs
+1. Integrate remaining individual workflow files into the nextflow pipeline.
+2. Refactor code to allow for flexibility of inputs/outputs
