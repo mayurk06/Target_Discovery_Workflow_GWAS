@@ -7,7 +7,7 @@ This repo contains 2 main folders.
 ## 22_Project 
 Contains the "raw" files used to carry out the exact work of my internship. All the files within 22_Project can stil be used in other workflows, but will just require additional work from the user to update values according to their data files.
 
-## GWAS_Pipeline 
+## Pipeline_GWAS 
 Contains the in progress pipeline work for reproducible workflows. 
 
 # TODO
