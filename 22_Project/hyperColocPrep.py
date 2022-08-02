@@ -6,8 +6,6 @@ import csv
 
 # For each column that has a QTL signal grab the flanked list 
 # from the appropriate source
-# Can just look for up to 3 for now
-# Turn column names into list and then count how many QTL sources 
 
 # SNP = sys.argv[1]
 # outPath = sys.argv[2]
@@ -50,7 +48,8 @@ mQTLDBName = "mQTL.db"
 # print(GWASLoci.info())
 
 window = 500000
-c=0
+c=0 # temp counter for debugging purposes
+
 # Match based on matches from output lists
 for indexG, rowG in GWASLoci.iterrows():
     gwasSNP = rowG["SNP"]
@@ -166,167 +165,3 @@ for indexG, rowG in GWASLoci.iterrows():
                     except Exception as e:
                         print(e) 
                         continue
-
-exit()
-
-
-for index, row in gwasQTL.iterrows():
-    IndexSNP = row["Index_SNP"]
-    eSNPGeneID = row["GeneID"]
-    mCpG = row["CpG"]
-
-    IndexChr = "chr"+str(row["ChrNone"])
-    indexPos = int(row["bp"])
-    startPos = indexPos - window
-    endPos   = indexPos + window
-
-    print(IndexSNP, indexPos, IndexChr, eSNPGeneID, mCpG)
-
-    gwasCols = ["SNP", "BETA", "SE"]
-    hyprDataMatch = gwasData.loc[(gwasData["Chr"] == IndexChr) & (gwasData["Pos"] >= startPos) & (gwasData["Pos"] <= endPos)]
-    hyprData = hyprDataMatch.rename(columns={"BETA": "BETA_GWAS", "SE": "SE_GWAS"})
-
-    # print(hyprData.head())
-    print("222")
-    # matrixDB = sqlite3.connect('mode=memory')
-    matrixDB = sqlite3.connect(':memory:')
-    matrixDBCur = matrixDB.cursor()
-
-    # hyprDataMatch.to_sql('gwasIndexTemp', con=matrixDB, if_exists="replace")
-    hyprData.to_sql('gwasIndexTemp', con=matrixDB, if_exists="replace")
-    print("333")
-    matrixDBCur.executescript("ATTACH DATABASE 'eQTL.db' AS eQTL;")
-    matrixDBCur.executescript("ATTACH DATABASE 'mQTL.db' AS mQTL;")
-    print("444")
-    c+=1
-    if c>4:
-        exit()
-    try:
-        # c+=1
-        # if c>4:
-        #     exit()
-
-        # more verbose query generation: why inner join, when can do conditional select?
-
-#SELECT gwasIndexTemp.SNP, gwasIndexTemp.BETA_GWAS, gwasIndexTemp.SE_GWAS, eQTL.NephQTL_Glomeruli.eSNP_G, eQTL.NephQTL_Glomeruli.eGeneID_G, eQTL.NephQTL_Glomeruli.eBETA_G, eQTL.NephQTL_Glomeruli.eSE_G
-        joinTableQuery = '''SELECT gwasIndexTemp.SNP, gwasIndexTemp.BETA_GWAS, gwasIndexTemp.SE_GWAS, eQTL.NephQTL_Glomeruli.eBETA_G, eQTL.NephQTL_Glomeruli.eSE_G
-            FROM gwasIndexTemp 
-            INNER JOIN eQTL.NephQTL_Glomeruli
-                ON gwasIndexTemp.SNP = eQTL.NephQTL_Glomeruli.eSNP_G
-            INNER JOIN eQTL.NephQTL_Tubule
-                ON gwasIndexTemp.SNP = eQTL.NephQTL_Tubule.eSNP_T
-                WHERE eQTL.NephQTL_Tubule.eGeneID_T = '$G' OR eQTL.NephQTL_Glomeruli.eGeneID_G = '$G';'''
-
-        print("Test")
-
-
-        sqlQuery = joinTableQuery.replace("$G", str(eSNPGeneID))
-        sqlQuery = sqlQuery.replace("$M", str(mCpG))
-        # print(sqlQuery)
-       
-        csvName = "hyperData/"+str(IndexSNP)+"_"+str(eSNPGeneID)+"_"+str(mCpG)+".csv"
-
-        db_df = pd.read_sql_query(sqlQuery, matrixDB)
-        db_df.to_csv(csvName, index=False)
-
-        # matrixDBCur.execute(sqlQuery)
-
-        # with open(csvName, "w", newline='') as csv_file:   
-        #     csv_writer = csv.writer(csv_file)
-        #     csv_writer.writerow([i[0] for i in matrixDBCur.description]) # write headers
-        #     csv_writer.writerows(matrixDBCur)
-
-        #     for row in matrixDBCur:
-        #         print(row)
-        #         csv_writer.writerow(row)
-    
-    except Exception as e: 
-        print(e)
-        continue
-
-    c+=1
-
-
-exit()
-
-# SQL multiple INNER JOIN queries:
-# FROM gwasIndexTemp 
-# INNER JOIN eQTL.NephQTL_Glomeruli
-#     ON gwasIndexTemp.SNP = eQTL.NephQTL_Glomeruli.eSNP_G
-#     WHERE eQTL.NephQTL_Glomeruli.eGeneID_G = '$G'
-# INNER JOIN eQTL.NephQTL_Tubule
-#     ON gwasIndexTemp.SNP = eQTL.NepthQTL_Tubule.eSNP_T
-#     WHERE eQTL.NepthQTL_Tubule.eGeneID_T = 'G;'''
-
-# for index, row in GWASLoci.iterrows():
-#     IndexSNP = row["SNP"]
-
-#     for indexE, rowE in eQTLLoci.iterrows():
-#         eSNPIndex = rowE["Index_SNP"]
-#         eSNPGeneID = rowE["GeneID"]
-
-#         for indexM, rowM in mQTLNephLoci.iterrows():
-#             mSNPIndex = rowM["Index_SNP"]
-#             mCpG = rowM["CpG"]
-
-#             # Left join x2 the gwas and qtl pd.dfs and use that list to run through 
-#             # the values
-#             if IndexSNP == eSNPIndex == mSNPIndex:
-#                 IndexChr = "chr" + str(row["Chr"])
-#                 indexPos = int(row["bp"])
-#                 startPos = indexPos - window
-#                 endPos   = indexPos + window
-
-#                 print(IndexSNP, eSNPGeneID, eSNPGeneID, mSNPIndex, mCpG)
-
-#                 gwasCols = ["SNP", "BETA", "SE"]
-#                 hyprDataMatch = gwasData.loc[(gwasData["Chr"] == IndexChr) & (gwasData["Pos"] >= startPos) & (gwasData["Pos"] <= endPos)]
-#                 hyprData = hyprDataMatch.rename(columns={"BETA": "BETA_GWAS", "SE": "SE_GWAS"})
-
-#                 matrixDB = sqlite3.connect('file:cachedb?mode=memory')
-#                 matrixDBCur = matrixDB.cursor()
-
-#                 hyprData.to_sql('gwasIndexTemp', con=matrixDB, if_exists="replace")
-
-#                 matrixDBCur.executescript("ATTACH DATABASE 'eQTL.db' AS eQTL;")
-#                 matrixDBCur.executescript("ATTACH DATABASE 'meQTL.db' AS mQTL;")
-
-#                 try:
-#                     joinTableQuery = '''SELECT SNP, BETA_GWAS, SE_GWAS 
-#                         FROM gwasIndexTemp 
-#                         INNER JOIN eQTL.NephQTL_Glomeruli
-#                             ON gwasIndexTemp.SNP = eQTL.NephQTL_Glomeruli.eSNP_G
-#                         WHERE eQTL.NephQTL_Glomeruli.eGeneID_G = $G;''' #change to proper
-
-#                     matrixDBCur.execute(joinTableQuery.replace("$G", str(eSNPGeneID)))
-
-#                     csvName = str(IndexSNP)+"_"+str(eSNPIndex)+"-"+str(eSNPGeneID)+"_"+str(mSNPIndex)+"_"+str(mCpG)+".csv"
-#                     with open(csvName, "w", newline='') as csv_file:   
-#                         csv_writer = csv.writer(csv_file)
-#                         csv_writer.writerow([i[0] for i in matrixDBCur.description]) # write headers
-#                         csv_writer.writerows(matrixDBCur)
-
-#                     rows = c.fetchall()
-#                     for row in rows:
-#                         # do your stuff
-#                         csvWriter.writerow(row)
-
-#                     print(result)
-                
-#                 except: 
-#                     continue
-
-#                 c+=1
-#                 if c>1:
-#                     exit()
-
-
-
-
-    # set equal to values that are associated w/ index SNP and then get gene to 
-    # search by SNP + GeneID
-
-    # For each gwas index if index snp exists in all the qtl sources, 
-    # then collect SNPs for each of the qtl sources, loop through every trait 
-
-
